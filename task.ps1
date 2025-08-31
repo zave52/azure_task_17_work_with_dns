@@ -195,7 +195,7 @@ $RecordSet = Get-AzPrivateDnsRecordSet -ZoneName $privateDnsZoneName -ResourceGr
 if ($null -eq $RecordSet)
 {
     $Records = @()
-    $Records += New-AzPrivateDnsRecordConfig -Cname $webVmName
+    $Records += New-AzPrivateDnsRecordConfig -Cname "$webVmName.$privateDnsZoneName"
     $RecordSet = New-AzPrivateDnsRecordSet `
     -Name "todo" `
     -RecordType CNAME `
