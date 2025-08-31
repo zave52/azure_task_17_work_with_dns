@@ -190,7 +190,26 @@ else
     Write-Host "Virtual network link already exists."
 }
 
-Write-Host "Creating CNAME record ..."
+Write-Host "Waiting for web server A record to be auto-registered..."
+$maxAttempts = 30
+$attempt = 0
+$webServerARecord = $null
+
+do {
+    $attempt++
+    Write-Host "Checking for A record... Attempt $attempt of $maxAttempts"
+    $webServerARecord = Get-AzPrivateDnsRecordSet -ZoneName $privateDnsZoneName -ResourceGroupName $resourceGroupName -Name $webVmName -RecordType A -ErrorAction SilentlyContinue
+    if ($null -eq $webServerARecord) {
+        Start-Sleep -Seconds 10
+    }
+} while ($null -eq $webServerARecord -and $attempt -lt $maxAttempts)
+
+if ($null -eq $webServerARecord) {
+    Write-Error "Web server A record was not auto-registered after waiting. Cannot create CNAME record."
+    exit 1
+}
+
+Write-Host "Web server A record found. Creating CNAME record ..."
 $RecordSet = Get-AzPrivateDnsRecordSet -ZoneName $privateDnsZoneName -ResourceGroupName $resourceGroupName -Name "todo" -RecordType CNAME -ErrorAction SilentlyContinue
 if ($null -eq $RecordSet)
 {
