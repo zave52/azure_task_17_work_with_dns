@@ -18,7 +18,7 @@ $jumpboxVmName = "jumpbox"
 $dnsLabel = "matetask" + (Get-Random -Count 1)
 
 $privateDnsZoneName = "or.nottodo"
-
+$CnameRecord = "webserver.$privateDnsZoneName"
 
 Write-Host "Creating a resource group $resourceGroupName ..."
 New-AzResourceGroup -Name $resourceGroupName -Location $location
@@ -54,20 +54,20 @@ New-AzVm `
 -size $vmSize `
 -SubnetName $webSubnetName `
 -VirtualNetworkName $virtualNetworkName `
--SshKeyName $sshKeyName 
+-SshKeyName $sshKeyName
 $Params = @{
-    ResourceGroupName  = $resourceGroupName
-    VMName             = $webVmName
-    Name               = 'CustomScript'
-    Publisher          = 'Microsoft.Azure.Extensions'
-    ExtensionType      = 'CustomScript'
+    ResourceGroupName = $resourceGroupName
+    VMName = $webVmName
+    Name = 'CustomScript'
+    Publisher = 'Microsoft.Azure.Extensions'
+    ExtensionType = 'CustomScript'
     TypeHandlerVersion = '2.1'
-    Settings          = @{fileUris = @('https://raw.githubusercontent.com/mate-academy/azure_task_17_work_with_dns/main/install-app.sh'); commandToExecute = './install-app.sh'}
- }
+    Settings = @{ fileUris = @('https://raw.githubusercontent.com/mate-academy/azure_task_17_work_with_dns/main/install-app.sh'); commandToExecute = './install-app.sh' }
+}
 Set-AzVMExtension @Params
 
 Write-Host "Creating a public IP ..."
-$publicIP = New-AzPublicIpAddress -Name $jumpboxVmName -ResourceGroupName $resourceGroupName -Location $location -Sku Basic -AllocationMethod Dynamic -DomainNameLabel $dnsLabel
+$publicIP = New-AzPublicIpAddress -Name $jumpboxVmName -ResourceGroupName $resourceGroupName -Location $location -Sku Standard -AllocationMethod Static -DomainNameLabel $dnsLabel
 Write-Host "Creating a management VM ..."
 New-AzVm `
 -ResourceGroupName $resourceGroupName `
@@ -80,5 +80,23 @@ New-AzVm `
 -SshKeyName $sshKeyName `
 -PublicIpAddressName $jumpboxVmName
 
+$Zone = New-AzPrivateDnsZone `
+-Name $privateDnsZoneName `
+-ResourceGroupName $resourceGroupName
 
-# Write your code here  -> 
+$Link = New-AzPrivateDnsVirtualNetworkLink `
+-ZoneName $privateDnsZoneName `
+-ResourceGroupName $resourceGroupName `
+-Name "mylink" `
+-VirtualNetworkId $virtualNetwork.Id `
+-EnableRegistration
+
+$Records = @()
+$Records += New-AzPrivateDnsRecordConfig -Cname $CnameRecord
+$RecordSet = New-AzPrivateDnsRecordSet `
+-Name "todo" `
+-RecordType CNAME `
+-ResourceGroupName $resourceGroupName `
+-TTL 3600 `
+-ZoneName $privateDnsZoneName `
+-PrivateDnsRecords $Records
