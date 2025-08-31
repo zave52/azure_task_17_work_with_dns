@@ -106,7 +106,6 @@ else
     Write-Host "Web server VM already exists."
 }
 
-# Check if custom script extension already exists
 $extension = Get-AzVMExtension -ResourceGroupName $resourceGroupName -VMName $webVmName -Name 'CustomScript' -ErrorAction SilentlyContinue
 if ($null -eq $extension)
 {
