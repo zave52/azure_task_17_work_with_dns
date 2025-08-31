@@ -18,7 +18,6 @@ $jumpboxVmName = "jumpbox"
 $dnsLabel = "matetask" + (Get-Random -Count 1)
 
 $privateDnsZoneName = "or.nottodo"
-$CnameRecord = "webserver.$privateDnsZoneName"
 
 Write-Host "Creating a resource group $resourceGroupName ..."
 New-AzResourceGroup -Name $resourceGroupName -Location $location
@@ -92,7 +91,7 @@ $Link = New-AzPrivateDnsVirtualNetworkLink `
 -EnableRegistration
 
 $Records = @()
-$Records += New-AzPrivateDnsRecordConfig -Cname $CnameRecord
+$Records += New-AzPrivateDnsRecordConfig -Cname $webVmName
 $RecordSet = New-AzPrivateDnsRecordSet `
 -Name "todo" `
 -RecordType CNAME `
